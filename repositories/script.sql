@@ -6,7 +6,8 @@ CREATE TABLE users (
     date_updated DATETIME NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(500) NOT NULL,
-    hash_salt VARCHAR(150) NOT NULL
+    hash_salt VARCHAR(150) NOT NULL,
+    role VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE students (
