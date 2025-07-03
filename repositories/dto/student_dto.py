@@ -3,6 +3,9 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+from entities.user import User
+from repositories.dto.user_dto import UserDto
+
 
 @dataclass
 class StudentDTO:
@@ -15,9 +18,7 @@ class StudentDTO:
     phone_number: str
     matric_number: str
     user_id: UUID
-    email: Optional[str]
-    password_hash: Optional[str] = None
-    hash_salt: Optional[str] = None
+    user: Optional[UserDto] = None
 
 @dataclass
 class UpdatedStudentDTO:

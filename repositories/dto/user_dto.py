@@ -8,8 +8,8 @@ from uuid import UUID
 class UserDto:
     id: UUID
     email: str
-    date_created: datetime
     role: str
+    date_created: Optional[datetime] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     date_updated: Optional[datetime] = None

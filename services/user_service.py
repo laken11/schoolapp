@@ -1,14 +1,16 @@
 import datetime
+from http.client import responses
 from typing import Union, Tuple, Optional
 from uuid import UUID
 
 from entities.user import User
+from helpers.converters.user_converter import UserConverter
 from helpers.hashing import HashingService
-from repositories.dto.user_dto import UserDto, ChangePasswordDto
+from repositories.dto.user_dto import ChangePasswordDto
 from repositories.user_repository import UserRepository
 from services.models.base_response import BaseResponse
 from services.models.user.user_model import CreateUserRequestModel, CreateUserResponseModel, ForgetPasswordRequestModel, \
-    ChangePasswordRequestModel, LoginResponseModel
+    ChangePasswordRequestModel, LoginResponseModel, LoginRequestModel, GetUserResponseModel
 
 
 class UserService:
@@ -46,7 +48,7 @@ class UserService:
     def forget_password(self, request: ForgetPasswordRequestModel) -> BaseResponse:
         ## check if user with email already exists
         user_exits, user = self.__check_if_user_exists(request.email)
-        if user_exits:
+        if not user_exits:
             return BaseResponse(status=False, message=f"User with email {request.email} already exists")
 
         # validate password
@@ -57,7 +59,7 @@ class UserService:
     def change_password(self, request: ChangePasswordRequestModel) -> BaseResponse:
         ## check if user with email already exists
         user_exits, user = self.__check_if_user_exists(request.email)
-        if user_exits:
+        if not user_exits:
             return BaseResponse(status=False, message=f"User with email {request.email} already exists")
 
         # validate password
@@ -72,21 +74,35 @@ class UserService:
         return self.__change_password(password=request.new_password, email=request.email, user_id=user.id,
                                       updated_by=request.updated_by)
 
-    def login(self, email: str, password: str) -> BaseResponse:
-
+    def login(self, request: LoginRequestModel) -> BaseResponse:
         ## check if user with email already exists
-        user_exits, user = self.__check_if_user_exists(email)
+        user_exits, user = self.__check_if_user_exists(request.email)
         if user_exits:
             return BaseResponse(status=False,
-                                message=f"Unable to login with email {email}, email or password incorrect")
+                                message=f"Unable to login with email {request.email}, email or password incorrect")
 
         # validate current password
-        is_password_valid = HashingService.validate_password(password, user.password_hash, user.hash_salt)
+        is_password_valid = HashingService.validate_password(request.password, user.password_hash, user.hash_salt)
         if not is_password_valid:
             return BaseResponse(status=False,
-                                message=f"Unable to login with email {email}, email or password incorrect")
+                                message=f"Unable to login with email {request.email}, email or password incorrect")
 
         return LoginResponseModel(status=True, message=f"Login successful", email=user.email, id=user.id)
+
+    def get(self, email: Optional[str] = None, id: Optional[UUID] = None) -> BaseResponse:
+        response: Optional[BaseResponse, GetUserResponseModel]
+        user: Optional[User] = None
+        if email:
+            user = self._user_repository.get(email)
+            if not user:
+                return BaseResponse(status=False, message=f"User with email {email} does not exist")
+        if id:
+            user = self._user_repository.get(id)
+            if not user:
+                return BaseResponse(status=False, message=f"User with id {id} does not exist")
+        if not user:
+            return BaseResponse(status=False, message=f"Unable to get user with email {email} or id {id} does not exist")
+        return GetUserResponseModel(status=True, message=f"Get user successful", id=user.id, email=user.email, role=user.role)
 
     def __change_password(self, password: str, email: str, user_id: UUID, updated_by: str) -> BaseResponse:
         hash_salt, password_hash = HashingService.hash_password(password)

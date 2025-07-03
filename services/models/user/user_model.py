@@ -40,4 +40,10 @@ class LoginRequestModel:
 class LoginResponseModel(BaseResponse):
     id: UUID
     email: str
+    role: str
 
+@dataclass
+class GetUserResponseModel(BaseResponse):
+    id: UUID
+    email: str
+    role: str

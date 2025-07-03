@@ -11,6 +11,7 @@ class UserConverter:
             email=dto.email,
             password_hash=dto.password_hash,
             hash_salt=dto.hash_salt,
+            role=dto.role,
         )
         user.id = dto.id
         user.updated_by = dto.updated_by
@@ -30,5 +31,6 @@ class UserConverter:
             updated_by=entity.updated_by,
             date_updated=entity.date_updated,
             date_created=entity.date_created,
+            role=entity.role,
         )
         return user_dto
