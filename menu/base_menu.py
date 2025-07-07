@@ -8,7 +8,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         """Not Implemented"""
 
     @abc.abstractmethod
-    def print_means(self):
+    def print_menu(self):
         """Not Implemented"""
 
     @classmethod
@@ -30,6 +30,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
         return input("Invalid input, try again: ")
 
     def get_to_menu(self):
-        self.print_means()
+        self.print_menu()
         option = self.handle_user_input()
         self.handle_menu(option)

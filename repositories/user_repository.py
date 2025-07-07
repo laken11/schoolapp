@@ -16,18 +16,19 @@ class UserRepository:
     def create(self, user: User) -> Optional[UUID]:
         try:
             user_dto = UserConverter.convert_entity_to_dto(user)
-            query = f"""INSERT INTO users 
-            (id, date_created, created_by, date_updated, updated_by, email, role, password_hash, hash_salt) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-            user_id = self._context.execute(query, user_dto)
-            return UUID(str(user_id))
+            query = """INSERT INTO users
+                       (id, date_created, created_by, date_updated, updated_by, email, role, password_hash, hash_salt)
+                       VALUES (%(id)s, %(date_created)s, %(created_by)s, %(date_updated)s, %(updated_by)s,
+                               %(email)s, %(role)s, %(password_hash)s, %(hash_salt)s)"""
+            row_count = self._context.execute(query, user_dto)
+            return user.id if row_count > 0 else None
         except Exception as e:
             print(e)
             return None
 
     def change_password(self, user_id: UUID, change_password_dto: ChangePasswordDto) -> Optional[UUID]:
         try:
-            query = f"""UPDATE users SET date_updated = (%(date_updated)s), updated_by = %(updated_by)s),
+            query = f"""UPDATE users SET date_updated = (%(date_updated)s), updated_by = %(updated_by)s,
                                 password_hash = %(password_hash)s, hash_salt = %(hash_salt)s WHERE id = %(id)s"""
             params = {
                 'id': user_id,
@@ -36,8 +37,8 @@ class UserRepository:
                 'password_hash': change_password_dto.password_hash,
                 'hash_salt': change_password_dto.hash_salt
             }
-            user_id = self._context.execute(query, params)
-            return UUID(str(user_id))
+            row_count = self._context.execute(query, params)
+            return params["id"] if row_count > 0 else None
         except Exception as e:
             print(e)
             return None
@@ -58,6 +59,8 @@ class UserRepository:
                 }
             if query is "" or params is {}: return None
             data: Dict = self._context.get(query, params)
+            if data is None:
+                return None
             user = UserDto(
                 id=data.get('id'),
                 date_created=data.get('date_created'),

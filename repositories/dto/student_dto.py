@@ -11,13 +11,13 @@ from repositories.dto.user_dto import UserDto
 class StudentDTO:
     id: UUID
     created_by: str
-    updated_by: str
-    date_created: datetime
-    date_updated: datetime
     name: str
     phone_number: str
     matric_number: str
     user_id: UUID
+    updated_by: Optional[str] = None
+    date_created: Optional[datetime] = None
+    date_updated: Optional[datetime] = None
     user: Optional[UserDto] = None
 
 @dataclass

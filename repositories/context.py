@@ -1,8 +1,10 @@
 import abc
-from typing import Optional, Generator, Dict
+from datetime import datetime
+from typing import Optional, Generator, Dict, Any
+from uuid import UUID
 
 from mysql.connector import MySQLConnection
-
+from mysql.connector import Error
 
 class Context(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -14,12 +16,12 @@ class Context(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def execute(self, query: str, param: object) -> object:
+    def execute(self, query: str, param: object) -> int:
         pass
 
 
 class MySqlDbContext(Context):
-    db_connection: Optional[MySQLConnection] = None
+    _connection = None
 
     def __init__(self, host: str, database: str, user: str, password: str, port: int = 3306):
         self.host = host
@@ -27,33 +29,66 @@ class MySqlDbContext(Context):
         self.user = user
         self.password = password
         self.port = port
+        self.connection = None
 
-    def create(self, host: str, database: str, user: str, password: str, port: int = 3306):
-        self.db_connection = MySQLConnection(host=host, database=database, user=user,
-                                             password=password, port=port)
+    def connect(self):
+        try:
+            self._connection = MySQLConnection(
+                host=self.host,
+                database=self.database,
+                user=self.user,
+                password=self.password,
+                port=self.port
+            )
+            if self._connection.is_connected():
+                return self._connection
+        except Error as e:
+            print(f"Error connecting to MySQL: {e}")
+            return None
 
     def get_many(self, query: str, param: dict[str, object]) -> Generator[Dict[str, object], None, None]:
-        with self.db_connection.connect() as connection:
+        self.connect()
+        with self._connection as connection:
             with connection.cursor(dictionary=True) as cursor:
                 cursor.execute(query, param)
                 for item in cursor.fetchall():
                     yield item
 
-    def get(self, query: str, param: dict[str, object]) -> Dict[str, object]:
-        with self.db_connection.connect() as connection:
+    def get(self, query: str, param: dict[str, object]) -> Optional[Dict[str, object]]:
+        self.connect()
+        with self._connection as connection:
             with connection.cursor(dictionary=True) as cursor:
                 cursor.execute(query, param)
                 result = cursor.fetchone()
                 return result
 
-    def execute(self, query: str, param: object) -> object:
+    def execute(self, query: str, param: object) -> int:
         try:
-            with self.db_connection.connect() as connection:
+            self.connect()
+            with self._connection as connection:
                 with connection.cursor() as cursor:
-                    cursor.execute(query, param)
-                    last_row_id = cursor.lastrowid
+                    cursor.execute(query, self._to_dict(param))
+                    last_row_id = cursor.rowcount
                     connection.commit()
                     return last_row_id
         except Exception as e:
-            self.db_connection.rollback()
+            self._connection.rollback()
             raise e
+
+    @staticmethod
+    def _to_dict(params: object) -> Dict[str, Any]:
+        """Convert dictionary values to MySQL-compatible types"""
+        if isinstance(params, dict):
+            return params
+        params = params.__dict__
+        converted = {}
+        for key, value in params.items():
+            if isinstance(value, UUID):
+                converted[key] = str(value)
+            elif isinstance(value, datetime):
+                converted[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+            elif value is None:
+                converted[key] = None
+            else:
+                converted[key] = value
+        return converted

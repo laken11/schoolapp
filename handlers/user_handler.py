@@ -10,11 +10,9 @@ from services.user_service import UserService
 
 class UserHandler(BaseHandler):
     _user_service: UserService
-    _container_service: ContainerService
 
-    def __init__(self, user_service: UserService, container_service: ContainerService):
+    def __init__(self, user_service: UserService):
         self._user_service = user_service
-        self._container_service = container_service
 
     def create(self, role: str) -> None:
         role = role.lower()
@@ -42,13 +40,14 @@ class UserHandler(BaseHandler):
             user_response = self._user_service.get(response.email)
             if not user_response.status:
                 print(f"Unable to process your request: {response.message}")
-            self._container_service.set("current_user", user_response)
+                return
+            ContainerService.set("current_user", user_response)
 
     def logout(self) -> None:
-        self._container_service.delete("current_user")
+        ContainerService.delete("current_user")
 
     def change_password(self) -> None:
-        current_user: GetUserResponseModel = self._container_service.get("current_user")
+        current_user: GetUserResponseModel = ContainerService.get("current_user")
         if current_user is None:
             print("No current logged in user, Please kindly login!")
             return
@@ -66,6 +65,7 @@ class UserHandler(BaseHandler):
         response: BaseResponse = self._user_service.change_password(request)
         if not response.status:
             print(f"Unable to process your request: {response.message}")
+            return
         print(f"Password changed successfully")
 
     def forgot_password(self) -> None:

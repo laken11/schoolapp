@@ -21,7 +21,7 @@ class HashingService:
         provided_hash = hashlib.pbkdf2_hmac(
             "sha512",
             provided_password.encode("utf-8"),
-            stored_hash_salt.encode("utf-8"),
+            bytes.fromhex(stored_hash_salt),
             10000,
         )
 

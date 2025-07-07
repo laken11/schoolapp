@@ -1,7 +1,7 @@
 import datetime
 import uuid
 from abc import ABC
-from typing import Optional
+from typing import Optional, Dict, Any
 from uuid import UUID
 
 
@@ -16,3 +16,5 @@ class Entity(ABC):
         self.id = uuid.uuid4()
         self.date_created = datetime.datetime.now(datetime.UTC)
         self.created_by = created_by
+        self.updated_by = None
+        self.date_updated = None

@@ -1,6 +1,8 @@
 from typing import Optional, Dict, List, Generator
 from uuid import UUID
 
+from entities.student import Student
+from helpers.converters.stduent_converter import StudentConverter
 from repositories.context import Context
 from repositories.dto.student_dto import StudentDTO, UpdatedStudentDTO
 from repositories.dto.user_dto import UserDto
@@ -12,13 +14,14 @@ class StudentRepository:
     def __init__(self, context: Context):
         self._context = context
 
-    def create(self, student: StudentDTO) -> Optional[UUID]:
+    def create(self, student: Student) -> Optional[UUID]:
         try:
+            student_dto = StudentConverter.convert_entity_to_dto(student)
             query = f"""INSERT INTO students 
             (id, created_by, updated_by, date_created, date_updated, user_id, name, phone_number, matric_number) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-            student_id = self._context.execute(query, student)
-            return UUID(str(student_id))
+            rows_affected = self._context.execute(query, student_dto)
+            return student.id if rows_affected > 0 else None
         except Exception as e:
             print(e)
             return None
@@ -35,14 +38,14 @@ class StudentRepository:
                 'phone_number': update_student_dto.phone_number,
 
             }
-            student_id = self._context.execute(query, params)
-            return UUID(str(student_id))
+            rows_affected = self._context.execute(query, params)
+            return student_id if rows_affected > 0 else None
         except Exception as e:
             print(e)
             return None
 
     def get(self, matric_number: Optional[str] = None, student_id: Optional[UUID] = None, email: Optional[str] = None,
-            user_id: Optional[UUID] = None) -> Optional[StudentDTO]:
+            user_id: Optional[UUID] = None) -> Optional[Student]:
         try:
             query = ("SELECT s.id AS student_id, s.name AS student_name, s.matric_number AS student_matric_numner, "
                      "s.phone_number AS student_phone_number, s.date_created AS student_date_created, "
@@ -79,13 +82,13 @@ class StudentRepository:
                     email=data.get('student_email'),
                     id=data.get('student_user_id'),
                     role=data.get('student_role')))
-            return student
+            return StudentConverter.convert_dto_to_entity(student)
         except Exception as e:
             print(e)
             return None
 
-    def list(self) -> List[StudentDTO]:
-        students: List[StudentDTO] = []
+    def list(self) -> List[Student]:
+        students: List[Student] = []
         try:
             query = ("SELECT s.id AS student_id, s.name AS student_name, s.matric_number AS student_matric_numner, "
                      "s.phone_number AS student_phone_number, s.date_created AS student_date_created, "
@@ -95,7 +98,7 @@ class StudentRepository:
             params = {}
             data: Generator[Dict, None, None] = self._context.get_many(query, params)
             for item in data:
-                students.append(StudentDTO(
+                students.append(StudentConverter.convert_dto_to_entity(StudentDTO(
                     id=item.get('student_id'),
                     name=item.get('student_name'),
                     matric_number=item.get('student_matric_number'),
@@ -108,7 +111,7 @@ class StudentRepository:
                     user=UserDto(
                         email=item.get('student_email'),
                         id=item.get('student_user_id'),
-                        role=item.get('student_role'))))
+                        role=item.get('student_role')))))
             return students
         except Exception as e:
             print(e)

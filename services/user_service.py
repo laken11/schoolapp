@@ -1,10 +1,8 @@
 import datetime
-from http.client import responses
-from typing import Union, Tuple, Optional
+from typing import Tuple, Optional
 from uuid import UUID
 
 from entities.user import User
-from helpers.converters.user_converter import UserConverter
 from helpers.hashing import HashingService
 from repositories.dto.user_dto import ChangePasswordDto
 from repositories.user_repository import UserRepository
@@ -77,7 +75,7 @@ class UserService:
     def login(self, request: LoginRequestModel) -> BaseResponse:
         ## check if user with email already exists
         user_exits, user = self.__check_if_user_exists(request.email)
-        if user_exits:
+        if not user_exits:
             return BaseResponse(status=False,
                                 message=f"Unable to login with email {request.email}, email or password incorrect")
 
@@ -87,7 +85,7 @@ class UserService:
             return BaseResponse(status=False,
                                 message=f"Unable to login with email {request.email}, email or password incorrect")
 
-        return LoginResponseModel(status=True, message=f"Login successful", email=user.email, id=user.id)
+        return LoginResponseModel(status=True, message=f"Login successful", email=user.email, id=user.id, role=user.role)
 
     def get(self, email: Optional[str] = None, id: Optional[UUID] = None) -> BaseResponse:
         response: Optional[BaseResponse, GetUserResponseModel]
