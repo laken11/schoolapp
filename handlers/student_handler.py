@@ -13,17 +13,17 @@ class StudentHandler(BaseHandler):
 
     def create(self):
         email = self.validate_input(user_input=input("Enter student email address: "), data_type="str", regex_pat=r'^[\w\.-]+@[\w\.-]+\.\w{2,}$')
-        name = self.validate_input(user_input=input("Enter student name: "), data_type="str", regex_pat=r'^[\w\.-]+$')
-        phone_number = self.validate_input(user_input=input("Enter student phone number: "), data_type="str", regex_pat=r'^[0-9]{10}$')
+        name = self.validate_input(user_input=input("Enter student name: "), data_type="str")
+        phone_number = self.validate_input(user_input=input("Enter student phone number: "), data_type="str", regex_pat=r'(?:\+?(\d{1,3}))?')
         request: CreateStudentRequestModel = CreateStudentRequestModel(email=email, name=name, phone_number=phone_number)
         response = self._student_service.create(request)
         print(response.message)
 
     def update(self):
         matric_number = self.validate_input(user_input=input("Provider student matric number: "), data_type="str")
-        name = self.validate_input(user_input=input("Enter student name: "), data_type="str", regex_pat=r'^[\w\.-]+$')
+        name = self.validate_input(user_input=input("Enter student name: "), data_type="str")
         phone_number = self.validate_input(user_input=input("Enter student phone number: "), data_type="str",
-                                           regex_pat=r'^[0-9]{10}$')
+                                           regex_pat=r'(?:\+?(\d{1,3}))?')
 
         request = UpdateStudentRequestModel(name=name, phone_number=phone_number, date_updated=datetime.now(UTC))
         response = self._student_service.update(matric_number=matric_number, request=request)
@@ -35,6 +35,7 @@ class StudentHandler(BaseHandler):
         if not response.status:
             print("Student not found")
         else:
+            print("Fetched student:\n")
             print(str(response.student))
 
     def list(self):
@@ -42,5 +43,6 @@ class StudentHandler(BaseHandler):
         if not response.status:
             print("Student not found")
         else:
+            print("Fetched students:\n")
             for student in response.students:
-                print(str(student))
+                print(f"{str(student)}\n")

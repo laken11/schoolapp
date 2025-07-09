@@ -27,7 +27,9 @@ class AdminMenu(BaseMenu):
                 option = self.handle_user_input()
                 self.__handle_user_menu(option)
             case 2:
-                ...
+                self.__print_student_menu()
+                option = self.handle_user_input()
+                self.__handle_student_menu(option)
             case 3:
                 self._user_handler.logout()
                 ContainerService.get("main_menu").print_menu()

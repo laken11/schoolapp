@@ -22,6 +22,7 @@ class StudentDTO:
 
 @dataclass
 class UpdatedStudentDTO:
+    id: UUID
     name: str
     phone_number: str
     updated_by: str

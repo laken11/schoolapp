@@ -68,9 +68,9 @@ class MySqlDbContext(Context):
             with self._connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(query, self._to_dict(param))
-                    last_row_id = cursor.rowcount
+                    row_count = cursor.rowcount
                     connection.commit()
-                    return last_row_id
+                    return row_count
         except Exception as e:
             self._connection.rollback()
             raise e

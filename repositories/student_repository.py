@@ -19,7 +19,7 @@ class StudentRepository:
             student_dto = StudentConverter.convert_entity_to_dto(student)
             query = f"""INSERT INTO students 
             (id, created_by, updated_by, date_created, date_updated, user_id, name, phone_number, matric_number) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            VALUES (%(id)s, %(created_by)s, %(updated_by)s, %(date_created)s, %(date_updated)s, %(user_id)s, %(name)s, %(phone_number)s, %(matric_number)s)"""
             rows_affected = self._context.execute(query, student_dto)
             return student.id if rows_affected > 0 else None
         except Exception as e:
@@ -30,15 +30,7 @@ class StudentRepository:
         try:
             query = f"""UPDATE students SET name = %(name)s, phone_number = %(phone_number)s,
              date_updated = %(date_updated)s, updated_by = %(updated_by)s WHERE id = %(id)s"""
-            params = {
-                'id': student_id,
-                'updated_by': update_student_dto.updated_by,
-                'date_updated': update_student_dto.date_updated,
-                'name': update_student_dto.name,
-                'phone_number': update_student_dto.phone_number,
-
-            }
-            rows_affected = self._context.execute(query, params)
+            rows_affected = self._context.execute(query, update_student_dto)
             return student_id if rows_affected > 0 else None
         except Exception as e:
             print(e)
@@ -47,23 +39,23 @@ class StudentRepository:
     def get(self, matric_number: Optional[str] = None, student_id: Optional[UUID] = None, email: Optional[str] = None,
             user_id: Optional[UUID] = None) -> Optional[Student]:
         try:
-            query = ("SELECT s.id AS student_id, s.name AS student_name, s.matric_number AS student_matric_numner, "
+            query = ("SELECT s.id AS student_id, s.name AS student_name, s.matric_number AS student_matric_number, "
                      "s.phone_number AS student_phone_number, s.date_created AS student_date_created, "
                      "s.created_by AS student_created_by, s.date_updated AS student_date_updated, "
-                     "s.updated_by AS student_update_by, u.email AS stduent_email, u.id AS stduent_user_id, u.role AS student_user_role "
-                     "FROM students AS s INNER JOIN users AS u ON s.id = u.id WHERE 1=1")
+                     "s.updated_by AS student_update_by, u.email AS student_user_email, u.id AS student_user_id, u.role AS student_user_role "
+                     "FROM students AS s INNER JOIN users AS u ON s.user_id = u.id WHERE 1=1")
             params = {}
             if matric_number:
-                query += f" AND s.matric_number = '{matric_number}'"
+                query += f" AND s.matric_number = %(matric_number)s"
                 params['matric_number'] = matric_number
             elif student_id:
-                query += f" AND s.id = {student_id}"
+                query += f" AND s.id = %(student_id)s"
                 params['student_id'] = student_id
             elif email:
-                query += f" AND u.email = {email}"
+                query += f" AND u.email = %(email)s"
                 params['email'] = email
             elif user_id:
-                query += f" AND u.id = {user_id}"
+                query += f" AND u.id = %(user_id)s"
                 params['user_id'] = user_id
             else:
                 return None
@@ -79,9 +71,9 @@ class StudentRepository:
                 user_id=data.get('student_user_id'),
                 created_by=data.get('student_created_by'),
                 user=UserDto(
-                    email=data.get('student_email'),
+                    email=data.get('student_user_email'),
                     id=data.get('student_user_id'),
-                    role=data.get('student_role')))
+                    role=data.get('student_user_role')))
             return StudentConverter.convert_dto_to_entity(student)
         except Exception as e:
             print(e)
@@ -93,8 +85,8 @@ class StudentRepository:
             query = ("SELECT s.id AS student_id, s.name AS student_name, s.matric_number AS student_matric_numner, "
                      "s.phone_number AS student_phone_number, s.date_created AS student_date_created, "
                      "s.created_by AS student_created_by, s.date_updated AS student_date_updated, "
-                     "s.updated_by AS student_update_by, u.email AS stduent_email, u.id AS stduent_user_id, u.role AS student_user_role  "
-                     "FROM students AS s INNER JOIN users AS u ON s.id = u.id")
+                     "s.updated_by AS student_update_by, u.email AS student_user_email, u.id AS student_user_id, u.role AS student_user_role "
+                     "FROM students AS s INNER JOIN users AS u ON s.user_id = u.id WHERE 1=1")
             params = {}
             data: Generator[Dict, None, None] = self._context.get_many(query, params)
             for item in data:
@@ -109,9 +101,9 @@ class StudentRepository:
                     user_id=item.get('student_user_id'),
                     created_by=item.get('student_created_by'),
                     user=UserDto(
-                        email=item.get('student_email'),
+                        email=item.get('student_user_email'),
                         id=item.get('student_user_id'),
-                        role=item.get('student_role')))))
+                        role=item.get('student_user_role')))))
             return students
         except Exception as e:
             print(e)

@@ -1,5 +1,4 @@
 from entities.student import Student
-from entities.user import User
 from repositories.dto.student_dto import StudentDTO
 
 
@@ -15,9 +14,15 @@ class StudentConverter:
             date_updated=entity.date_updated,
             name=entity.name,
             phone_number=entity.phone_number,
-            matric_number=entity.matric_number
+            matric_number=entity.matric_number,
+            user=entity.user,
         )
 
     @staticmethod
     def convert_dto_to_entity(dto: StudentDTO) -> Student:
-        return Student(created_by=dto.created_by,name=dto.name, phone_number=dto.phone_number, user_id=dto.user_id,user=dto.user)
+        student = Student(created_by=dto.created_by,name=dto.name, phone_number=dto.phone_number, user_id=dto.user_id,user=dto.user, matric_number=dto.matric_number)
+        student.id = dto.id
+        student.updated_by = dto.updated_by
+        student.date_created = dto.date_created
+        student.date_updated = dto.date_updated
+        return student

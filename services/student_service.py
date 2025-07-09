@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from uuid import UUID
 
 from entities.student import Student
@@ -21,7 +21,7 @@ class StudentService:
 
     def create(self, request: CreateStudentRequestModel) -> BaseResponse:
         user = self._user_service.get(request.email)
-        if not user:
+        if not user.status:
             return BaseResponse(message=f"User with email {request.email} not found", status=False)
 
         if user.role != "student":
@@ -52,6 +52,7 @@ class StudentService:
             return BaseResponse(message=f"Student with matric number {matric_number} not found", status=False)
         current_user = ContainerService.get("current_user")
         update_student_dto = UpdatedStudentDTO(
+            id=student.id,
             updated_by=current_user.email,
             date_updated=request.date_updated,
             name=request.name,
@@ -63,7 +64,7 @@ class StudentService:
         return BaseResponse(status=True, message="Updated student")
 
     def get(self, student_id: Optional[UUID] = None, email: Optional[str] = None,
-            matric_number: Optional[str] = None) -> BaseResponse:
+            matric_number: Optional[str] = None) -> Union[GetStudentResponseModel, BaseResponse]:
         student = self._student_repository.get(student_id=student_id, email=email, matric_number=matric_number)
         if not student:
             return BaseResponse(message=f"Student not found", status=False)

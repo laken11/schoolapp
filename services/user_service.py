@@ -1,5 +1,5 @@
 import datetime
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from uuid import UUID
 
 from entities.user import User
@@ -87,7 +87,7 @@ class UserService:
 
         return LoginResponseModel(status=True, message=f"Login successful", email=user.email, id=user.id, role=user.role)
 
-    def get(self, email: Optional[str] = None, id: Optional[UUID] = None) -> BaseResponse:
+    def get(self, email: Optional[str] = None, id: Optional[UUID] = None) -> Union[GetUserResponseModel, BaseResponse]:
         response: Optional[BaseResponse, GetUserResponseModel]
         user: Optional[User] = None
         if email:
