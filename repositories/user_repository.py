@@ -57,7 +57,9 @@ class UserRepository:
                 params = {
                     'id': id
                 }
-            if query is "" or params is {}: return None
+            # check if any parameter was provided
+            if query == "" or params == {}:
+                return None
             data: Dict = self._context.get(query, params)
             if data is None:
                 return None

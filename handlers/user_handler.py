@@ -69,7 +69,11 @@ class UserHandler(BaseHandler):
         print(f"Password changed successfully")
 
     def forgot_password(self) -> None:
-        email: str = self.validate_input(input("Enter your email: "), "str", r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$')
+        email: str = self.validate_input(
+            input("Enter your email: "),
+            "str",
+            r'^[\w\.-]+@[\w\.-]+\.\w{2,}$'
+        )
         password: str = self.validate_input(input("Enter password: "), "str", r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$')
         confirm_password: str = self.validate_input(input("Confirm password: "), "str",
                                                     r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$')
