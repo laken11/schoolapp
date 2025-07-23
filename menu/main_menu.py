@@ -1,3 +1,4 @@
+from enum_.role import Role
 from services.continer_service import ContainerService
 from handlers import BaseHandler
 from menu.base_menu import BaseMenu
@@ -13,8 +14,13 @@ class MainMenu(BaseMenu):
             case 1:
                 self._user_handler.login()
                 current_user = ContainerService.get("current_user")
-                if current_user and current_user.role.lower() == "Admin".lower():
+                if current_user and current_user.role == Role.ADMIN:
                     ContainerService.get("admin_menu").get_to_menu()
+                self.print_menu()
+                option: int = self.handle_user_input()
+                self.handle_menu(option)
+            case 2:
+                self._user_handler.create(Role.ADMIN)
                 self.print_menu()
                 option: int = self.handle_user_input()
                 self.handle_menu(option)

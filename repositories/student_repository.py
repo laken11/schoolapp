@@ -1,13 +1,95 @@
 from typing import Optional, Dict, List, Generator
 from uuid import UUID
 
-from entities.student import Student
 from helpers.converters.stduent_converter import StudentConverter
+from persistence.decorator import with_session
+from persistence.models import Student, User
 from repositories.context import Context
 from repositories.dto.student_dto import StudentDTO, UpdatedStudentDTO
 from repositories.dto.user_dto import UserDto
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 
-
+class ORMStudentRepository:
+    
+    @with_session
+    def create(self, student: Student, session: Session = None)-> Optional[UUID]:
+        try:
+            session.add(student)
+            session.commit()
+            student = session.refresh(student)
+            return student.id if student else None
+        except Exception as e:
+            print(e)
+    
+    @with_session
+    def update(self, update_student_dto: UpdatedStudentDTO, session: Session = None)-> Optional[UUID]:
+        try:
+            statment = (
+                select(Student)
+                .where(Student.id == update_student_dto.id)
+            )
+            
+            student_to_update = session.scalars(statment).one_or_none()
+            if not student_to_update:
+                return None
+            
+            student_to_update.name = update_student_dto.name
+            student_to_update.phone_number = update_student_dto.phone_number
+            student_to_update.date_updated = update_student_dto.date_updated
+            student_to_update.updated_by = update_student_dto.updated_by
+            
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            print(e)
+    
+    @with_session
+    def get(self, matric_number: Optional[str] = None, student_id: Optional[UUID] = None, email: Optional[str] = None,
+            user_id: Optional[UUID] = None, session: Session = None) -> Optional[StudentDTO]:
+        try:
+            statement = (
+                select(Student)
+                .join(User, Student.user_id == User.id)
+            )
+            
+            if matric_number:
+                statement = statement.where(Student.matric_number == matric_number)
+            elif student_id:
+                statement = statement.where(Student.id == student_id)
+            elif email:
+                statement = statement.where(User.email == email)
+            elif user_id:
+                statement = statement.where(User.id == user_id)
+            else:
+                return None
+                
+            student = session.scalars(statement).one_or_none()
+            if student:
+                return StudentConverter.convert_entity_to_dto(student)
+            return None
+        except Exception as e:
+            print(e)
+            return None
+    
+    @with_session
+    def list(self, session: Session = None) -> List[StudentDTO]:
+        result: List[StudentDTO] = []
+        try:
+            statement = (
+                select(Student)
+                .join(User, Student.user_id == User.id)
+            )
+            students = session.scalars(statement).all()
+            for student in students:
+                result.append(StudentConverter.convert_entity_to_dto(student))
+        except Exception as e:
+            print(e)
+            return []
+            
+            
+        
+    
 class StudentRepository:
     _context: Context
 

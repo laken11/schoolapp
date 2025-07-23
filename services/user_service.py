@@ -1,20 +1,21 @@
 import datetime
 from typing import Tuple, Optional, Union
 from uuid import UUID
+import uuid
 
-from entities.user import User
+from persistence.models import User
 from helpers.hashing import HashingService
-from repositories.dto.user_dto import ChangePasswordDto
-from repositories.user_repository import UserRepository
+from repositories.dto.user_dto import ChangePasswordDto, UserDto
+from repositories.user_repository import ORMUserRepository, UserRepository
 from services.models.base_response import BaseResponse
 from services.models.user.user_model import CreateUserRequestModel, CreateUserResponseModel, ForgetPasswordRequestModel, \
     ChangePasswordRequestModel, LoginResponseModel, LoginRequestModel, GetUserResponseModel
 
 
 class UserService:
-    _user_repository: UserRepository
+    _user_repository: ORMUserRepository
 
-    def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: ORMUserRepository):
         self._user_repository = user_repository
 
     def create(self, request: CreateUserRequestModel) -> BaseResponse:
@@ -31,12 +32,14 @@ class UserService:
         hash_salt, password_hash = HashingService.hash_password(request.password)
 
         ## create user entity
-        user = User(
-            email=request.email,
-            password_hash=password_hash,
-            hash_salt=hash_salt,
-            role=request.role,
-        )
+        user = User()
+        user.id = uuid.uuid4()
+        user.email = request.email
+        user.password_hash = password_hash
+        user.role = request.role
+        user.hash_salt = hash_salt
+        user.date_created = datetime.datetime.now(datetime.UTC)
+        
         user_id = self._user_repository.create(user)
         if not user_id:
             return BaseResponse(status=False, message=f"Unable to create user with email {request.email}")
@@ -112,7 +115,7 @@ class UserService:
             return BaseResponse(status=False, message=f"Unable to change password for user with email {email}")
         return BaseResponse(status=True, message=f"Changed password for user with email {email}")
 
-    def __check_if_user_exists(self, email: str) -> Tuple[bool, Optional[User]]:
+    def __check_if_user_exists(self, email: str) -> Tuple[bool, Optional[UserDto]]:
         user = self._user_repository.get(email=email)
         if not user:
             return False, None

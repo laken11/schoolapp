@@ -1,3 +1,4 @@
+from enum_.role import Role
 from handlers.student_handler import StudentHandler
 from menu.base_menu import BaseMenu
 from services.continer_service import ContainerService
@@ -81,12 +82,12 @@ class AdminMenu(BaseMenu):
     def __handle_user_menu(self, option: int):
         match option:
             case 1:
-                self._user_handler.create("Student")
+                self._user_handler.create(Role.STUDENT)
                 self.__print_user_menu()
                 option = self.handle_user_input()
                 self.__handle_user_menu(option)
             case 2:
-                self._user_handler.create("Admin")
+                self._user_handler.create(Role.ADMIN)
                 self.__print_user_menu()
                 option = self.handle_user_input()
                 self.__handle_user_menu(option)

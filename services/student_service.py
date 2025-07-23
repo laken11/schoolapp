@@ -2,8 +2,8 @@ from typing import Tuple, Optional, Union
 from uuid import UUID
 
 from entities.student import Student
-from repositories.dto.student_dto import StudentDTO, UpdatedStudentDTO
-from repositories.student_repository import StudentRepository
+from repositories.dto.student_dto import UpdatedStudentDTO
+from repositories.student_repository import ORMStudentRepository, StudentRepository
 from services.continer_service import ContainerService
 from services.models.base_response import BaseResponse
 from services.models.student.student_model import CreateStudentRequestModel, UpdateStudentRequestModel, \
@@ -12,10 +12,10 @@ from services.user_service import UserService
 
 
 class StudentService:
-    _student_repository: StudentRepository
+    _student_repository: ORMStudentRepository
     _user_service: UserService
 
-    def __init__(self, student_repository: StudentRepository, user_service: UserService):
+    def __init__(self, student_repository: ORMStudentRepository, user_service: UserService):
         self._student_repository = student_repository
         self._user_service = user_service
 

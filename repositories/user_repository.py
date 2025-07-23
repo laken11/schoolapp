@@ -1,12 +1,77 @@
 from typing import Optional, Dict, List, Generator
 from uuid import UUID
 
-from entities.user import User
+from sqlalchemy.orm import Session
+from persistence.decorator import with_session
+from persistence.models import User
+from sqlalchemy import select
 from helpers.converters.user_converter import UserConverter
 from repositories.context import Context
 from repositories.dto.user_dto import UserDto, ChangePasswordDto
 
-
+class ORMUserRepository:
+    @with_session
+    def create(self, user: User, session: Session = None) -> Optional[UUID]:
+        try:
+            session.add(user)
+            return user.id if user else None
+        except Exception as e:
+            print(e)
+            return None
+    
+    @with_session
+    def change_password(self, change_password_dto: ChangePasswordDto, session: Session = None) -> Optional[UUID]:
+        try:
+            statement = (
+                select(User)
+                .where(User.id==change_password_dto.id)
+            )
+            user_to_change = session.scalars(statement).one_or_none()
+            if not user_to_change:
+                return None
+            
+            user_to_change.password_hash = change_password_dto.password_hash
+            user_to_change.date_updated = change_password_dto.date_updated
+            user_to_change.updated_by = change_password_dto.updated_by
+            user_to_change.hash_salt = change_password_dto.hash_salt
+            return user_to_change.id
+        except Exception as e:
+            session.rollback()
+            print(e)
+    
+    @with_session
+    def get(self, email: Optional[str] = None, id: Optional[UUID] = None, session: Session = None) -> Optional[UserDto]:
+        try:
+            statement = (
+                select(User)
+            )
+            if email:
+                statement = statement.where(User.email==email)
+            elif id:
+                statement = statement.where(User.id==id)
+            else:
+                return None               
+            user = session.scalars(statement).one_or_none()
+            if user:
+                return UserConverter.convert_entity_to_dto(user)
+            return None
+        except Exception as e:
+            print(e)
+          
+    @with_session
+    def list(self, session: Session = None) -> List[UserDto]:
+        result: List[UserDto] = []
+        try:
+            statement =(
+                select(User)
+            )
+            users = session.scalars(statement).all()
+            for user in users:
+                result.append(UserConverter.convert_entity_to_dto(user))
+        except Exception as e:
+            print(e) 
+            
+                       
 class UserRepository:
     _context: Context
 
@@ -57,7 +122,7 @@ class UserRepository:
                 params = {
                     'id': id
                 }
-            if query is "" or params is {}: return None
+            if query == "" or params is {}: return None
             data: Dict = self._context.get(query, params)
             if data is None:
                 return None

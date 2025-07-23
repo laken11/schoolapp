@@ -15,7 +15,6 @@ class UserHandler(BaseHandler):
         self._user_service = user_service
 
     def create(self, role: str) -> None:
-        role = role.lower()
         email: str = self.validate_input(input("Enter email: "), "str", r'^[\w\.-]+@[\w\.-]+\.\w{2,}$')
         password: str = self.validate_input(input("Enter password: "), "str", r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$')
         confirm_password: str = self.validate_input(input("Confirm password: "), "str",

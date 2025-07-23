@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from enum_.role import Role
 from services.models.base_response import BaseResponse
 
 
 @dataclass
 class CreateUserRequestModel:
     email: str
-    role: str
+    role: Role
     password: str
     confirm_password: str
 

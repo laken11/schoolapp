@@ -5,8 +5,8 @@ from handlers.user_handler import UserHandler
 from menu.admin_menu import AdminMenu
 from menu.main_menu import MainMenu
 from repositories.context import Context, MySqlDbContext
-from repositories.student_repository import StudentRepository
-from repositories.user_repository import UserRepository
+from repositories.student_repository import ORMStudentRepository, StudentRepository
+from repositories.user_repository import ORMUserRepository, UserRepository
 from services.continer_service import ContainerService
 from services.student_service import StudentService
 from services.user_service import UserService
@@ -15,10 +15,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def add_repos(container: ContainerService):
-    context = container.get("context")
-    user_repository = UserRepository(context)
+    user_repository = ORMUserRepository()
     container.set("user_repository", user_repository)
-    student_repository = StudentRepository(context)
+    student_repository = ORMStudentRepository()
     container.set("student_repository", student_repository)
 
 def add_services(container: ContainerService):
